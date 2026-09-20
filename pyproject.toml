@@ -1,0 +1,18 @@
+[project]
+name = "ai-assistant"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Dmitry globa",email = "dima.globa2015@yandex.ru"}
+]
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+]
+
+[tool.poetry]
+packages = [{include = "ai_assistant", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
