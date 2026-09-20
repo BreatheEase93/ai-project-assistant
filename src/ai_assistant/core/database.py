@@ -11,7 +11,7 @@ def get_db_connection(db_path: str) -> sqlite3.Connection:
 
 
 def create_tables(conn: sqlite3.Connection) -> None:
-    """Функция для создания таблицы, с проектами и задачами"""
+    """Функция для создания таблицы, с проектами и задачами, а также отчетов"""
     cursor = conn.cursor()
 
     # таблица с проектми
@@ -33,6 +33,18 @@ def create_tables(conn: sqlite3.Connection) -> None:
             task_type TEXT NOT NULL CHECK (task_type IN ('big_block', 'subtask')),
             parent_id INTEGER,
             status TEXT NOT NULL DEFAULT 'todo',
+            FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+        )
+                        """)
+
+    # таблица с отчётом
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS completed_tasks_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task_id INTEGER NOT NULL,
+            project_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            completed_at TEXT DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
         )
                         """)
@@ -64,6 +76,23 @@ def add_task(
         cursor.execute(
             "INSERT INTO tasks (project_id, title, task_type, parent_id) VALUES (?, ?, ?, ?)",
             (project_id, title, task_type, parent_id),
+        )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.rollback()
+        return -1
+    return cursor.lastrowid
+
+
+def add_completed_task_log(
+    conn: sqlite3.Connection, task_id: int, project_id: int, title: str
+) -> int:
+    """Функция для добавления отчёта, возвращает id отчёта"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO completed_tasks_log (task_id, project_id, title) VALUES (?, ?, ?)",
+            (task_id, project_id, title),
         )
         conn.commit()
     except sqlite3.IntegrityError:
