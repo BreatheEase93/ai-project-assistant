@@ -11,7 +11,7 @@ def get_db_connection(db_path: str) -> sqlite3.Connection:
 
 
 def create_tables(conn: sqlite3.Connection) -> None:
-    """Функция для создания таблицы, с проектами"""
+    """Функция для создания таблицы, с проектами и задачами"""
     cursor = conn.cursor()
 
     # таблица с проектми
@@ -37,3 +37,36 @@ def create_tables(conn: sqlite3.Connection) -> None:
         )
                         """)
     conn.commit()
+
+
+def add_project(conn: sqlite3.Connection, name: str, path: str) -> int:
+    """Функция для добавления проекта, возвращает id проекта или -1 при ошибке"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO projects (name, path) VALUES (?, ?)", (name, path))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.rollback()
+        return -1
+    return cursor.lastrowid
+
+
+def add_task(
+    conn: sqlite3.Connection,
+    project_id: int,
+    title: str,
+    task_type: str,
+    parent_id: int | None = None,
+) -> int:
+    """Функция для добавления задачи, возвращает id задачи"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO tasks (project_id, title, task_type, parent_id) VALUES (?, ?, ?, ?)",
+            (project_id, title, task_type, parent_id),
+        )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.rollback()
+        return -1
+    return cursor.lastrowid
