@@ -6,7 +6,7 @@ def get_db_connection(db_path: str) -> sqlite3.Connection:
     сортирует ответ как словарь, возвращает обект подключения"""
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 
@@ -32,7 +32,7 @@ def create_tables(conn: sqlite3.Connection) -> None:
             title TEXT NOT NULL,
             task_type TEXT NOT NULL CHECK (task_type IN ('big_block', 'subtask')),
             parent_id INTEGER,
-            status TEXT NOT NULL DEFAULT 'todo',
+            status TEXT NOT NULL DEFAULT 'todo' CHECK (status IN ('todo', 'done', 'backlog')),
             FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
         )
                         """)
@@ -99,3 +99,27 @@ def add_completed_task_log(
         conn.rollback()
         return -1
     return cursor.lastrowid
+
+
+def delete_project(conn: sqlite3.Connection, project_id: int) -> bool:
+    """Удаляет проект. Возвращает True, если проект существовал и был удалён."""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM projects WHERE id = ?", (project_id,))
+        conn.commit()
+    except sqlite3.Error:
+        conn.rollback()
+        return False
+    return cursor.rowcount > 0
+
+
+def delete_task(conn: sqlite3.Connection, task_id: int) -> bool:
+    """Удаляет задачу. Возвращает True, если задача существовала и была удалена."""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+        conn.commit()
+    except sqlite3.Error:
+        conn.rollback()
+        return False
+    return cursor.rowcount > 0
