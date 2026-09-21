@@ -77,3 +77,44 @@ def build_project_tree(project_path: Path, spec: pathspec.PathSpec) -> list[Path
                 result.append(project_path / rel_file)
 
     return result
+
+
+from pathlib import Path
+
+
+def format_tree_to_string(files: list[Path], project_path: Path) -> str:
+    """Строит строковое представление дерева проекта в стиле команды tree."""
+    tree: dict = {}
+    for path in files:
+        if path == project_path:
+            continue
+        rel = path.relative_to(project_path)
+        node = tree
+        parts = rel.parts
+        for i, part in enumerate(parts):
+            if i == len(parts) - 1:
+                node.setdefault(part, None)
+            else:
+                node = node.setdefault(part, {})
+                if node is None:
+                    raise ValueError(f"Конфликт: {part} — и файл, и папка")
+
+    lines: list[str] = [project_path.name + "/"]
+
+    def sort_key(item: tuple[str, dict | None]) -> tuple[bool, str]:
+        name, subtree = item
+        return (subtree is None, name.lower())
+
+    def render(node: dict, prefix: str = "") -> None:
+        items = sorted(node.items(), key=sort_key)
+        for i, (name, subtree) in enumerate(items):
+            is_last = i == len(items) - 1
+            connector = "└── " if is_last else "├── "
+            suffix = "/" if subtree is not None else ""
+            lines.append(prefix + connector + name + suffix)
+            if subtree:
+                extension = "    " if is_last else "│   "
+                render(subtree, prefix + extension)
+
+    render(tree)
+    return "\n".join(lines)
