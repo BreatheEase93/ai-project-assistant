@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pathspec
+
 
 def load_gitignore_rules(project_path: Path) -> list[str] | None:
     """Функция ищет .gitignore, и возврващяет список строк"""
@@ -47,3 +49,7 @@ def collect_all_ignores(ignore: list[str] | None) -> list[str]:
         ".ai_tasks.json",
     ]
     return default_ignore + (ignore or [])
+
+
+def compile_ignore_spec(patterns: list[str]) -> pathspec.PathSpec:
+    """Функция фельтрвции"""
