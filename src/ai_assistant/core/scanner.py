@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pathspec
@@ -38,6 +39,7 @@ def collect_all_ignores(ignore: list[str] | None) -> list[str]:
         ".ruff_cache/",
         ".mypy_cache/",
         ".ipynb_checkpoints/",
+        ".git/",
         "*.sqlite3",
         "*.db",
         "*.local.db",
@@ -52,4 +54,26 @@ def collect_all_ignores(ignore: list[str] | None) -> list[str]:
 
 
 def compile_ignore_spec(patterns: list[str]) -> pathspec.PathSpec:
-    """Функция фельтрвции"""
+    """Функция фильтрации списка, на основе игнорируесых файлов"""
+    return pathspec.PathSpec.from_lines("gitwildmatch", patterns)
+
+
+def build_project_tree(project_path: Path, spec: pathspec.PathSpec) -> list[Path]:
+    """Функция фильтрации папок и файлов на основе игнорироемого файла"""
+
+    result: list[Path] = []
+    root_str = str(project_path)
+
+    for dirpath, dirnames, filenames in os.walk(root_str, topdown=True):
+        rel_dir = Path(dirpath).relative_to(project_path)
+
+        dirnames[:] = [
+            d for d in dirnames if not spec.match_file((rel_dir / d).as_posix() + "/")
+        ]
+
+        for name in filenames:
+            rel_file = rel_dir / name
+            if not spec.match_file(rel_file.as_posix()):
+                result.append(project_path / rel_file)
+
+    return result
