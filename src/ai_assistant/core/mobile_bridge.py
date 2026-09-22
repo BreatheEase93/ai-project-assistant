@@ -17,7 +17,7 @@ class Idea(BaseModel):
     text: str
 
 
-@app.get("/projects/")
+@app.get("/projects")
 async def list_project():
     conn = get_db_connection(DB_PATH)
     try:
@@ -26,7 +26,7 @@ async def list_project():
         conn.close()
 
 
-@app.get("/ideas/")
+@app.get("/ideas")
 async def ideas():
     conn = get_db_connection(DB_PATH)
     try:
@@ -35,7 +35,7 @@ async def ideas():
         conn.close()
 
 
-@app.post("/ideas/")
+@app.post("/ideas")
 async def create_idea(idea: Idea):
     conn = get_db_connection(DB_PATH)
     try:
