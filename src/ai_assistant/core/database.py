@@ -48,6 +48,17 @@ def create_tables(conn: sqlite3.Connection) -> None:
             FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
         )
                         """)
+
+    # таблица с идеями
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ideas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL,
+            text TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+        )
+                        """)
     conn.commit()
 
 
@@ -123,3 +134,32 @@ def delete_task(conn: sqlite3.Connection, task_id: int) -> bool:
         conn.rollback()
         return False
     return cursor.rowcount > 0
+
+
+def add_idea(conn: sqlite3.Connection, project_id: int, text: str) -> int:
+    """Функция для добавления идеи, возвращает id идеи"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO ideas (project_id, text) VALUES (?, ?)",
+            (project_id, text),
+        )
+        conn.commit()
+    except sqlite3.Error:
+        conn.rollback()
+        return -1
+    return cursor.lastrowid
+
+
+def get_projects(conn: sqlite3.Connection) -> list[dict]:
+    """Возвращает список проектов."""
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, path FROM projects")
+    return [dict(row) for row in cursor.fetchall()]
+
+
+def get_ideas(conn: sqlite3.Connection) -> list[dict]:
+    """Возвращает список идей."""
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, created_at, project_id, text FROM ideas")
+    return [dict(row) for row in cursor.fetchall()]
