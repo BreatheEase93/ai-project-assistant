@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Идеи</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 16px;
+            background: #f5f5f7;
+        }
+        select, textarea, button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        textarea { min-height: 100px; }
+        button {
+            background: #007aff;
+            color: #fff;
+            border: none;
+            font-weight: 600;
+        }
+        .idea {
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .idea small { color: #888; }
+    </style>
+</head>
+<body>
+
+    <h1>Идеи</h1>
+
+    <select id="project-select"></select>
+    <textarea id="idea-text" placeholder="Текст идеи"></textarea>
+    <button id="submit-btn">Отправить</button>
+
+    <h2>Список идей</h2>
+    <div id="ideas-list">Загрузка...</div>
+
+    <script>
+        const select = document.getElementById('project-select');
+        const text = document.getElementById('idea-text');
+        const btn = document.getElementById('submit-btn');
+        const list = document.getElementById('ideas-list');
+
+        // id → имя проекта
+        const projectNames = {};
+
+        // Загрузка проектов
+        fetch('/projects')
+            .then(r => r.json())
+            .then(data => {
+                select.innerHTML = '';
+                data.forEach(p => {
+                    projectNames[p.id] = p.name;   // запоминаем имя
+
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.name;
+                    select.appendChild(opt);
+                });
+                loadIdeas();   // список идей грузим после проектов
+            })
+            .catch(() => {
+                alert('Не удалось загрузить проекты');
+                list.textContent = 'Ошибка загрузки';
+            });
+
+        // Загрузка идей
+        function loadIdeas() {
+            fetch('/ideas')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        list.textContent = 'Пока идей нет';
+                        return;
+                    }
+                    list.innerHTML = '';
+                    data.forEach(idea => {
+                        const name = projectNames[idea.project_id] || `#${idea.project_id}`;
+
+                        const div = document.createElement('div');
+                        div.className = 'idea';
+                        div.innerHTML =
+                            `<div>${idea.text}</div>
+                             <small>${name}</small>`;
+                        list.appendChild(div);
+                    });
+                })
+                .catch(() => list.textContent = 'Ошибка загрузки идей');
+        }
+
+        // Отправка
+        btn.onclick = () => {
+            if (!text.value.trim()) {
+                alert('Введите текст идеи');
+                return;
+            }
+
+            fetch('/ideas', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    project_id: Number(select.value),
+                    text: text.value
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'created') {
+                    text.value = '';
+                    alert('Идея успешно сохранена!');
+                    loadIdeas();
+                }
+            })
+            .catch(() => alert('Ошибка отправки'));
+        };
+    </script>
+
+</body>
+</html>
