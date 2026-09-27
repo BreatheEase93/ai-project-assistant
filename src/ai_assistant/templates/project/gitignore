@@ -1,0 +1,66 @@
+# =========================
+# Python
+# =========================
+
+# Виртуальные окружения
+.venv/
+venv/
+env/
+ENV/
+
+# Кэш Python
+__pycache__/
+*.py[cod]
+
+
+# =========================
+# Инструменты
+# =========================
+
+# Кэши линтеров и тестов
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Покрытие кода
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+
+# =========================
+# IDE
+# =========================
+
+# PyCharm / JetBrains
+.idea/
+
+# VS Code — игнорируем всё, кроме settings.json
+.vscode/*
+!.vscode/settings.json
+
+# =========================
+# ОС
+# =========================
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =========================
+# Проект-специфичное
+# =========================
+
+# Переменные окружения
+.env
+.env.*
+!.env.example
+
+# Базы данных
+*.db
+*.sqlite3
