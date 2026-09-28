@@ -1,13 +1,21 @@
 from pathlib import Path
 
-from core.database import add_idea, get_db_connection, get_ideas, get_projects
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from .database import (
+    add_idea,
+    add_project,
+    add_task,
+    get_db_connection,
+    get_ideas,
+    get_projects,
+)
 
 
-DB_PATH = Path("assistant.db")
+DB_PATH = Path(__file__).resolve().parent.parent / "assistant.db"
 
 app = FastAPI()
 
@@ -23,7 +31,7 @@ class Idea(BaseModel):
 
 @app.get("/ui", response_class=HTMLResponse)
 async def ui(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 
 @app.get("/projects")
@@ -50,5 +58,38 @@ async def create_idea(idea: Idea):
     try:
         new_id = add_idea(conn, idea.project_id, idea.text)
         return {"id": new_id, "status": "created"}
+    finally:
+        conn.close()
+
+
+class ProjectCreate(BaseModel):
+    """Параметры создания нового проекта."""
+
+    name: str = Field(..., min_length=1, max_length=100)
+    path: str
+
+
+@app.post("/projects")
+async def create_project(project: ProjectCreate):
+    conn = get_db_connection(DB_PATH)
+    try:
+        project_id = add_project(conn, project.name, project.path)
+        if project_id == -1:
+            raise HTTPException(
+                status_code=400, detail="Project with this path already exists"
+            )
+        parent_id = add_task(conn, project_id, "Начало работы", "big_block")
+        add_task(
+            conn,
+            project_id,
+            "Установка зависимостей, подключение poetry",
+            "subtask",
+            parent_id,
+        )
+        add_task(conn, project_id, "Короткий README", "subtask", parent_id)
+        add_task(conn, project_id, "Инициализация Docker", "subtask", parent_id)
+        add_task(conn, project_id, "Первый коммит", "subtask", parent_id)
+
+        return {"id": project_id, "status": "created"}
     finally:
         conn.close()

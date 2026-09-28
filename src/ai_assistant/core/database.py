@@ -1,7 +1,8 @@
 import sqlite3
+from pathlib import Path
 
 
-def get_db_connection(db_path: str) -> sqlite3.Connection:
+def get_db_connection(db_path: str | Path) -> sqlite3.Connection:
     """Функция для связи с базой данных получает на вход путь к базе,
     сортирует ответ как словарь, возвращает обект подключения"""
     conn = sqlite3.connect(db_path)

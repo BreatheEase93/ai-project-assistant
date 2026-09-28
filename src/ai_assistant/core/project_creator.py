@@ -3,6 +3,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from .api_client import register_project_on_server
+
 
 def create_project_skeleton(project_path: Path, project_name: str) -> bool:
     """Создаёт каркас Python-проекта: папку, git-репозиторий, Poetry-проект."""
@@ -58,3 +60,17 @@ def copy_templates(project_path: Path, project_name: str) -> bool:
     except Exception as e:
         print(f"Ошибка при копировании шаблонов: {e}")
         return False
+
+
+def create_project(project_path: Path, project_name: str) -> bool:
+    """Создаёт проект: каркас, шаблоны, регистрация на сервере."""
+    if not create_project_skeleton(project_path, project_name):
+        return False
+
+    if not copy_templates(project_path, project_name):
+        return False
+
+    if not register_project_on_server(project_name, str(project_path)):
+        return False
+
+    return True
