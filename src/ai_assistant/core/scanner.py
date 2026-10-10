@@ -79,9 +79,6 @@ def build_project_tree(project_path: Path, spec: pathspec.PathSpec) -> list[Path
     return result
 
 
-from pathlib import Path
-
-
 def format_tree_to_string(files: list[Path], project_path: Path) -> str:
     """Строит строковое представление дерева проекта в стиле команды tree."""
     tree: dict = {}
