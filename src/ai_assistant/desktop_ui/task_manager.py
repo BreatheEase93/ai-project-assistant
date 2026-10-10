@@ -11,7 +11,7 @@ def get_git_status(project_path: Path) -> list[str]:
         text=True,
     )
     if result.returncode != 0:
-        return []
+        return ["Git не инициализирован"]
     output = result.stdout.strip()
     if not output:
         return []
@@ -31,12 +31,16 @@ def get_current_branch(project_path: Path) -> str:
     return result.stdout.strip()
 
 
-def can_close_task(project_path: Path) -> bool:
+def can_close_task(project_path: Path) -> tuple[bool, str]:
     """Функция проверяет возможность закрытия задачи"""
     status = get_git_status(project_path)
-    if status != []:
-        return False
+    if status == ["Git не инициализирован"]:
+        return (False, "Git не инициализирован")
+    if status:
+        return (False, "Изминения в Git не сохранены")
     branch = get_current_branch(project_path)
-    if branch == "main" or "master":
-        return False
-    return True
+    if not branch:
+        return (False, "Detached HEAD")
+    if branch in ("main", "master"):
+        return (False, f"Нельзя выполнять задачи в {branch}")
+    return (True, "Всё ОК!")
