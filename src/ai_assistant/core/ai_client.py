@@ -1,3 +1,4 @@
+import asyncio
 import os
 from pathlib import Path
 
@@ -23,20 +24,29 @@ class BaseAIClient:
 
     async def _send_request(self, payload: dict) -> str:
         """Внутренний метод для отправки асинхронного запроса через httpx."""
+        last_error = ""
         async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(
-                    self.base_url, headers=self.headers, json=payload, timeout=90.0
-                )
-                response.raise_for_status()
+            for attempt in range(3):
+                if attempt > 0:
+                    await asyncio.sleep(2**attempt)
+                try:
+                    response = await client.post(
+                        self.base_url, headers=self.headers, json=payload, timeout=90.0
+                    )
+                    response.raise_for_status()
 
-                result_json = response.json()
-                return result_json["choices"][0]["message"]["content"]
+                    result_json = response.json()
+                    return result_json["choices"][0]["message"]["content"]
 
-            except httpx.HTTPStatusError as e:
-                return f"Ошибка API: {e.response.status_code} - {e.response.text}"
-            except httpx.RequestError as e:
-                return f"Ошибка сети: {e}"
+                except httpx.HTTPStatusError as e:
+                    last_error = (
+                        f"Ошибка API: {e.response.status_code} - {e.response.text}"
+                    )
+                    if e.response.status_code < 500:
+                        raise RuntimeError(last_error)
+                except httpx.RequestError as e:
+                    last_error = f"Ошибка сети: {e}"
+        raise RuntimeError(f"После 3 попыток: {last_error}")
 
 
 class OllamaClient(BaseAIClient):
