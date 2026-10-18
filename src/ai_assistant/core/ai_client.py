@@ -75,6 +75,15 @@ class OllamaClient(BaseAIClient):
         }
         return await self._send_request(payload)
 
+    async def healthcheck(self) -> bool:
+        """Метод для проверки доступности Ollama"""
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(f"{OLLAMA_URL}/api/tags", timeout=3.0)
+                return response.status_code == 200
+            except httpx.RequestError:
+                return False
+
 
 def get_ai_client(provider: str):
     """Фабричная функция, которая возвращает готовый объект нужного клиента."""
