@@ -203,3 +203,15 @@ def start_session(conn: sqlite3.Connection, project_id: int) -> int:
         conn.rollback()
         return -1
     return cursor.lastrowid
+
+
+def end_session(conn: sqlite3.Connection) -> bool:
+    """Заканчивает сессию"""
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM sessions")
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.Error:
+        conn.rollback()
+        return False
