@@ -12,7 +12,7 @@ def get_db_connection(db_path: str | Path) -> sqlite3.Connection:
 
 
 def create_tables(conn: sqlite3.Connection) -> None:
-    """Функция для создания таблицы, с проектами и задачами, а также отчетов"""
+    """Функция для создания таблицы, с проектами и задачами, а также отчетов и т.д."""
     cursor = conn.cursor()
 
     # таблица с проектми
@@ -60,6 +60,29 @@ def create_tables(conn: sqlite3.Connection) -> None:
             FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
         )
                         """)
+
+    # Таблица сесии
+    cursor.execute("""
+            CREATE TABLE IF NOT EXISTS sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER NOT NULL,
+                started_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+            )
+                            """)
+
+    # Таблица сообшений сесии
+    cursor.execute("""
+                CREATE TABLE IF NOT EXISTS session_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id INTEGER NOT NULL,
+                    original_content TEXT NOT NULL,
+                    processed_content  TEXT,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+                )
+                                """)
+
     conn.commit()
 
 
