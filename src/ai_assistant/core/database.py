@@ -220,7 +220,7 @@ def end_session(conn: sqlite3.Connection) -> bool:
 def add_session_message(
     conn: sqlite3.Connection, session_id: int, original_content: str
 ) -> int:
-    """Функция для сообщения сесии, возвращает id идеи"""
+    """Функция для сообщения сесии, возвращает id сообщения"""
     cursor = conn.cursor()
     try:
         cursor.execute(
@@ -232,3 +232,23 @@ def add_session_message(
         conn.rollback()
         return -1
     return cursor.lastrowid
+
+
+def update_processed_content(
+    conn: sqlite3.Connection, message_id: int, processed_content: str
+) -> bool:
+    """Функция добовления отредактированного сообщения для рефлексии"""
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE session_messages SET processed_content = ? WHERE id = ?",
+            (
+                processed_content,
+                message_id,
+            ),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.Error:
+        conn.rollback()
+        return False
