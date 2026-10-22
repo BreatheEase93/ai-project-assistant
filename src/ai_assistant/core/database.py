@@ -215,3 +215,20 @@ def end_session(conn: sqlite3.Connection) -> bool:
     except sqlite3.Error:
         conn.rollback()
         return False
+
+
+def add_session_message(
+    conn: sqlite3.Connection, session_id: int, original_content: str
+) -> int:
+    """Функция для сообщения сесии, возвращает id идеи"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO session_messages (session_id, original_content) VALUES (?, ?)",
+            (session_id, original_content),
+        )
+        conn.commit()
+    except sqlite3.Error:
+        conn.rollback()
+        return -1
+    return cursor.lastrowid
