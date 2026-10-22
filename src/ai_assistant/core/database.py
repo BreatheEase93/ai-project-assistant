@@ -187,3 +187,19 @@ def get_ideas(conn: sqlite3.Connection) -> list[dict]:
     cursor = conn.cursor()
     cursor.execute("SELECT id, created_at, project_id, text FROM ideas")
     return [dict(row) for row in cursor.fetchall()]
+
+
+def start_session(conn: sqlite3.Connection, project_id: int) -> int:
+    """Очишяет старую версию, сессии"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM sessions")
+        cursor.execute(
+            "INSERT INTO sessions (project_id) VALUES (?)",
+            (project_id,),
+        )
+        conn.commit()
+    except sqlite3.Error:
+        conn.rollback()
+        return -1
+    return cursor.lastrowid
