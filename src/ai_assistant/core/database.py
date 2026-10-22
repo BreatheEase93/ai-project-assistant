@@ -252,3 +252,16 @@ def update_processed_content(
     except sqlite3.Error:
         conn.rollback()
         return False
+
+
+def get_session_messages(conn: sqlite3.Connection, session_id: int) -> list[dict]:
+    """Выводит список всех сообшении за сессию"""
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, original_content, processed_content, created_at "
+        "FROM session_messages "
+        "WHERE session_id = ? "
+        "ORDER BY created_at",
+        (session_id,),
+    )
+    return [dict(row) for row in cursor.fetchall()]
